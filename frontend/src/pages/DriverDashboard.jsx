@@ -96,11 +96,15 @@ export default function DriverDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!isAvailable) return undefined;
+    if (!isAvailable) {
+      setRideRequests([]);
+      return;
+    }
 
-    const intervalId = setInterval(loadPendingRequests, 10000);
-    return () => clearInterval(intervalId);
-  }, [isAvailable]);
+    if (!activeRide) {
+      loadPendingRequests();
+    }
+  }, [isAvailable, activeRide]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -149,6 +153,9 @@ export default function DriverDashboard() {
 
     const onRideCancelled = (payload) => {
       toast.error(`Ride cancelled by rider: ${payload.message || 'Rider cancelled the ride'}`);
+      if (payload?.rideId) {
+        setRideRequests((prev) => prev.filter((item) => item.rideId !== payload.rideId));
+      }
       setActiveRide(null);
       setShowChat(false);
       setMessages([]);
@@ -194,6 +201,7 @@ export default function DriverDashboard() {
   }, [activeRide?.id, showChat]);
 
   const loadPendingRequests = async () => {
+    if (!isAvailable || activeRide) return;
     try {
       const { data } = await api.get('/api/rides/pending-requests');
       setRideRequests(data.requests || []);
@@ -660,7 +668,7 @@ export default function DriverDashboard() {
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{ride.status}</span>
                   </div>
                   <p className="mt-2 text-sm text-slate-600">{formatDate(ride.requestedAt)}</p>
-                  <p className="mt-2 text-sm text-slate-700">Rider: {ride.rider?.name || 'N/A'}</p>
+                  <p className="mt-2 text-sm text-slate-700">Driver: {user.name}</p>
                   <p className="text-sm text-slate-700">Pickup: {ride.pickupAddress}</p>
                   <p className="text-sm text-slate-700">Drop: {ride.dropAddress}</p>
                   <p className="mt-2 text-sm font-semibold text-slate-900">Fare: INR {ride.fare}</p>

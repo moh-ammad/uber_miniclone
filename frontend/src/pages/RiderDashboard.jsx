@@ -927,7 +927,12 @@ export default function RiderDashboard() {
                 <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No rides found yet.</p>
               )}
 
-              {rideHistory.map((ride) => (
+              {rideHistory.map((ride) => {
+                const effectivePaymentStatus = ride.status === 'CANCELLED'
+                  ? 'NOT_REQUIRED'
+                  : (ride.paymentStatus || 'PENDING');
+
+                return (
                 <div key={ride.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">Ride #{ride.id}</p>
@@ -937,11 +942,12 @@ export default function RiderDashboard() {
                   <p className="mt-2 text-sm text-slate-700">Pickup: {ride.pickupAddress}</p>
                   <p className="text-sm text-slate-700">Drop: {ride.dropAddress}</p>
                   <p className="mt-2 text-sm font-semibold text-slate-900">Fare: INR {ride.fare}</p>
-                  <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${paymentTone[ride.paymentStatus || 'PENDING'] || paymentTone.PENDING}`}>
-                    Payment {ride.paymentStatus || 'PENDING'}
+                  <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${paymentTone[effectivePaymentStatus] || paymentTone.PENDING}`}>
+                    Payment {effectivePaymentStatus}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
