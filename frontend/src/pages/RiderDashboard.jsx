@@ -232,6 +232,7 @@ export default function RiderDashboard() {
   });
 
   const mapCenter = useMemo(() => driverLocation || userLocation || DEFAULT_CENTER, [driverLocation, userLocation]);
+  const progressPercent = activeRide ? rideProgress[activeRide?.status || 'REQUESTED'] : 0;
   const bookingMapCenter = useMemo(
     () =>
       bookingData.pickupLat && bookingData.pickupLng
@@ -592,9 +593,9 @@ export default function RiderDashboard() {
         <header className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/85 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Rider Workspace</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Customer Workspace</p>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Welcome, {user.name}</h1>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Book rides without coordinates, track live, pay from rider account only.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Book rides without coordinates, track live, pay from customer account only.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -668,10 +669,14 @@ export default function RiderDashboard() {
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full bg-sky-600 transition-all"
-                    style={{ width: `${rideProgress[activeRide?.status || 'REQUESTED']}%` }}
+                    style={{ width: `${progressPercent}%` }}
                   />
                 </div>
-                <p className="mt-2 text-sm text-slate-600">Track request, driver acceptance, arrival, ride start, and payment.</p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {activeRide
+                    ? 'Track request, driver acceptance, arrival, ride start, and payment.'
+                    : 'No active ride yet. Book a ride to start tracking.'}
+                </p>
               </div>
             </div>
 
