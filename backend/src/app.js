@@ -6,11 +6,15 @@ import messageRoutes from './routes/message.routes.js';
 
 const app = express();
 
-// Middleware
-app.use(cors({
+const corsOptions = {
   origin: 'http://localhost:5173',
   credentials: true
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
+app.options('/{*splat}', cors(corsOptions)); // Express 5 wildcard OPTIONS
+
 app.use(express.json());
 
 // Request logging middleware
