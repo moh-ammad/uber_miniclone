@@ -1,0 +1,111 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  RIDER
+  DRIVER
+}
+
+enum RideStatus {
+  REQUESTED
+  ACCEPTED
+  ARRIVED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String    @unique
+  role          UserRole
+  socketId      String?
+  
+  // Driver specific fields
+  vehicleType   String?
+  vehicleNumber String?
+  vehicleColor  String?
+  isAvailable   Boolean   @default(false)
+  currentLat    Float?
+  currentLng    Float?
+  
+  // Relations
+  ridesAsRider  Ride[]    @relation("RiderRides")
+  ridesAsDriver Ride[]    @relation("DriverRides")
+  sentMessages  Message[] @relation("SentMessages")
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([role])
+  @@index([isAvailable])
+}
+
+model Ride {
+  id              Int         @id @default(autoincrement())
+  
+  // Rider
+  riderId         Int
+  rider           User        @relation("RiderRides", fields: [riderId], references: [id])
+  
+  // Driver
+  driverId        Int?
+  driver          User?       @relation("DriverRides", fields: [driverId], references: [id])
+  
+  // Locations
+  pickupLat       Float
+  pickupLng       Float
+  pickupAddress   String      @db.Text
+  dropLat         Float
+  dropLng         Float
+  dropAddress     String      @db.Text
+  
+  // Ride details
+  status          RideStatus  @default(REQUESTED)
+  otp             String
+  distance        Float?
+  duration        Int?
+  fare            Float
+  paymentStatus   String      @default("PENDING")
+  paidAt          DateTime?
+  
+  // Timestamps
+  requestedAt     DateTime    @default(now())
+  acceptedAt      DateTime?
+  arrivedAt       DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  // Relations
+  messages        Message[]
+  
+  @@index([riderId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  
+  rideId    Int
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  
+  senderId  Int
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  message   String   @db.Text
+  
+  createdAt DateTime @default(now())
+  
+  @@index([rideId])
+}
