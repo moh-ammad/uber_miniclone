@@ -372,10 +372,13 @@ export const cancelRide = async (req, res) => {
 
     const updatedRide = await prisma.ride.update({
       where: { id: parsedRideId },
-      data: { status: 'CANCELLED' }
+      data: {
+        status: 'CANCELLED',
+        paymentStatus: 'NOT_REQUIRED'
+      }
     });
 
-    // Notify driver with clear message
+    // Notify assigned driver, or all available drivers for pending requests
     if (ride.driver?.socketId) {
       emitToUser(ride.driver.socketId, 'ride_cancelled', {
         rideId: ride.id,
@@ -383,6 +386,23 @@ export const cancelRide = async (req, res) => {
         riderName: ride.rider.name
       });
       console.log(`Notified driver ${ride.driver.name} about ride cancellation`);
+    } else if (ride.status === 'REQUESTED') {
+      const drivers = await prisma.user.findMany({
+        where: {
+          role: 'DRIVER',
+          isAvailable: true,
+          socketId: { not: null }
+        },
+        select: { socketId: true }
+      });
+
+      drivers.forEach((driver) => {
+        emitToUser(driver.socketId, 'ride_cancelled', {
+          rideId: ride.id,
+          message: `${ride.rider.name} cancelled the request`,
+          riderName: ride.rider.name
+        });
+      });
     }
 
     res.json({ ride: updatedRide });
